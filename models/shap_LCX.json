@@ -1,0 +1,82 @@
+[
+  {
+    "feature": "num__Age",
+    "mean_abs_shap": 0.05273777650463229
+  },
+  {
+    "feature": "num__Weight",
+    "mean_abs_shap": 0.05273777650463223
+  },
+  {
+    "feature": "num__ESR",
+    "mean_abs_shap": 0.04156152533738506
+  },
+  {
+    "feature": "num__HB",
+    "mean_abs_shap": 0.04156152533738506
+  },
+  {
+    "feature": "cat__Nonanginal_N",
+    "mean_abs_shap": 0.026291514903464215
+  },
+  {
+    "feature": "cat__Nonanginal_Y",
+    "mean_abs_shap": 0.026291514903464215
+  },
+  {
+    "feature": "cat__CRF_Y",
+    "mean_abs_shap": 0.024859986141899257
+  },
+  {
+    "feature": "cat__CRF_N",
+    "mean_abs_shap": 0.024859986141899243
+  },
+  {
+    "feature": "cat__CVA_Y",
+    "mean_abs_shap": 0.02355878277855291
+  },
+  {
+    "feature": "cat__CVA_N",
+    "mean_abs_shap": 0.023558782778552907
+  },
+  {
+    "feature": "cat__Obesity_N",
+    "mean_abs_shap": 0.0228031529149692
+  },
+  {
+    "feature": "cat__Obesity_Y",
+    "mean_abs_shap": 0.022803152914969177
+  },
+  {
+    "feature": "num__FBS",
+    "mean_abs_shap": 0.018368870569096765
+  },
+  {
+    "feature": "num__CR",
+    "mean_abs_shap": 0.018368870569096758
+  },
+  {
+    "feature": "cat__DLP_Y",
+    "mean_abs_shap": 0.015017194348978139
+  },
+  {
+    "feature": "cat__DLP_N",
+    "mean_abs_shap": 0.015017194348978136
+  },
+  {
+    "feature": "cat__Airway disease_Y",
+    "mean_abs_shap": 0.013524800493630695
+  },
+  {
+    "feature": "cat__Airway disease_N",
+    "mean_abs_shap": 0.013524800493630692
+  },
+  {
+    "feature": "cat__Systolic Murmur_Y",
+    "mean_abs_shap": 0.012666727509159297
+  },
+  {
+    "feature": "cat__Systolic Murmur_N",
+    "mean_abs_shap": 0.012666727509159289
+  }
+]

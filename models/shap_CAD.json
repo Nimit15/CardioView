@@ -1,0 +1,82 @@
+[
+  {
+    "feature": "num__HB",
+    "mean_abs_shap": 0.0980778868233972
+  },
+  {
+    "feature": "num__ESR",
+    "mean_abs_shap": 0.09807788682339716
+  },
+  {
+    "feature": "num__Age",
+    "mean_abs_shap": 0.04349579763062899
+  },
+  {
+    "feature": "num__Weight",
+    "mean_abs_shap": 0.043495797630628975
+  },
+  {
+    "feature": "cat__LVH_N",
+    "mean_abs_shap": 0.037873102925079664
+  },
+  {
+    "feature": "cat__LowTH Ang_Y",
+    "mean_abs_shap": 0.03787310292507964
+  },
+  {
+    "feature": "cat__Exertional CP_N",
+    "mean_abs_shap": 0.032747850585282505
+  },
+  {
+    "feature": "cat__LowTH Ang_N",
+    "mean_abs_shap": 0.03274785058528249
+  },
+  {
+    "feature": "num__PR",
+    "mean_abs_shap": 0.025953372054982778
+  },
+  {
+    "feature": "num__Edema",
+    "mean_abs_shap": 0.02595337205498277
+  },
+  {
+    "feature": "cat__Obesity_Y",
+    "mean_abs_shap": 0.022044616074659018
+  },
+  {
+    "feature": "cat__Obesity_N",
+    "mean_abs_shap": 0.022044616074659015
+  },
+  {
+    "feature": "num__CR",
+    "mean_abs_shap": 0.01958344230829491
+  },
+  {
+    "feature": "num__FBS",
+    "mean_abs_shap": 0.019583442308294906
+  },
+  {
+    "feature": "cat__CVA_N",
+    "mean_abs_shap": 0.019422677723529555
+  },
+  {
+    "feature": "cat__CVA_Y",
+    "mean_abs_shap": 0.019422677723529545
+  },
+  {
+    "feature": "cat__DLP_N",
+    "mean_abs_shap": 0.017452803725714342
+  },
+  {
+    "feature": "cat__DLP_Y",
+    "mean_abs_shap": 0.017452803725714335
+  },
+  {
+    "feature": "cat__Sex_Fmale",
+    "mean_abs_shap": 0.01698153056888589
+  },
+  {
+    "feature": "cat__Sex_Male",
+    "mean_abs_shap": 0.016981530568885888
+  }
+]

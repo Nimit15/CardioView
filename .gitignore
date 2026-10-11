@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Tooling
+.claude/
+
+# Keep the small (303-row) dataset in the repo for reproducibility,
+# but not the raw zip or the regenerable model binaries.
+data/*.zip
+models/*.joblib
+
+# Runtime logs
+*.log
+
+# OS
+.DS_Store

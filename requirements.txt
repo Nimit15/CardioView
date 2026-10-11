@@ -1,0 +1,11 @@
+# Python 3.10+  —  pip install -r requirements.txt
+pandas>=2.0
+numpy>=1.26
+scikit-learn>=1.4
+shap>=0.44
+joblib>=1.3
+openpyxl>=3.1          # read the .xlsx dataset
+matplotlib>=3.8        # SHAP / metric plots
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
