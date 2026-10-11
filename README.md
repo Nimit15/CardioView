@@ -14,7 +14,11 @@ Each artery lights up on a 3D heart, from green for low risk to red for high. Yo
 
 ## Screenshots
 
-Add two or three images here once you have them: the 3D heart with the arteries coloured, a single artery selected with its contributing factors, and the full dashboard.
+![Dashboard with the 3D heart and coloured coronary arteries, high-risk patient](docs/screenshots/01-dashboard-high-risk.jpg)
+
+![An artery selected, showing the factors behind its score](docs/screenshots/02-artery-selected-factors.jpg)
+
+![A low-risk patient — the arteries turn green](docs/screenshots/03-low-risk.jpg)
 
 ## Getting started
 

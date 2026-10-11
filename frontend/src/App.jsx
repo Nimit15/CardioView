@@ -60,7 +60,6 @@ export default function App() {
       setResult(mockResult(features));
     } finally { setBusy(false); }
   }
-  // <<APPEND>>
   const probs = result ? Object.fromEntries(
     VESSELS.map((v) => [v, result.predictions?.[v]?.probability ?? 0])
   ) : {};
@@ -90,7 +89,11 @@ export default function App() {
             <label>{f.label}</label>
             {f.type === "select" ? (
               <select value={features[f.key] ?? ""} onChange={(e) => set(f.key, e.target.value)}>
-                {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                {f.options.map((o) => {
+                  const val = typeof o === "object" ? o.value : o;
+                  const lbl = typeof o === "object" ? o.label : o;
+                  return <option key={val} value={val}>{lbl}</option>;
+                })}
               </select>
             ) : f.type === "binary" ? (
               <select value={features[f.key] ?? 0} onChange={(e) => set(f.key, Number(e.target.value))}>

@@ -2,7 +2,8 @@
 // omitted feature with NaN (median-imputed), so this stays manageable.
 export const FIELDS = [
   { key: "Age", label: "Age", type: "number" },
-  { key: "Sex", label: "Sex", type: "select", options: ["Male", "Fmale"] },
+  { key: "Sex", label: "Sex", type: "select", options: [
+    { value: "Male", label: "Male" }, { value: "Fmale", label: "Female" }] },
   { key: "BMI", label: "BMI", type: "number", step: 0.1 },
   { key: "BP", label: "Systolic BP", type: "number" },
   { key: "PR", label: "Pulse rate", type: "number" },
@@ -52,4 +53,45 @@ export function riskColor(p) {
   const lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
   const rgb = p < 0.5 ? lerp(c1, c2, p / 0.5) : lerp(c2, c3, (p - 0.5) / 0.5);
   return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+
+// Turn raw one-hot / prefixed SHAP feature names into plain labels and collapse
+// one-hot pairs (e.g. "cat__Dyspnea_Y" + "cat__Dyspnea_N") into one row, keeping
+// the larger-magnitude effect. "num__Age" -> "Age"; "cat__LVH_N" -> "LVH: No".
+const YES = new Set(["y", "yes", "1", "true"]);
+const NO = new Set(["n", "no", "0", "false"]);
+export function prettyFactors(raw = []) {
+  const byBase = new Map();
+  for (const f of raw) {
+    const name = String(f.feature).replace(/^num__|^cat__/, "");
+    const isCat = /^cat__/.test(f.feature);
+    let base = name, label = name;
+    if (isCat) {
+      const i = name.lastIndexOf("_");
+      if (i > 0) {
+        base = name.slice(0, i);
+        const v = name.slice(i + 1);
+        const vl = YES.has(v.toLowerCase()) ? "Yes"
+          : NO.has(v.toLowerCase()) ? "No" : v;
+        label = `${base}: ${vl}`;
+      }
+    }
+    const prev = byBase.get(base);
+    if (!prev || Math.abs(f.contribution) > Math.abs(prev.contribution)) {
+      byBase.set(base, { label, contribution: f.contribution });
+    }
+  }
+  return [...byBase.values()].sort(
+    (a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+}
+
+// One-line CV metrics summary: "Model: rf · CV ROC-AUC 0.85 ± 0.05 · Brier 0.14 · F1 0.83 (pos 177/303)"
+export function fmtMetrics(m = {}) {
+  const n = (x, d = 2) => (typeof x === "number" ? x.toFixed(d) : x);
+  let s = `Model: ${m.model} · CV ROC-AUC ${n(m.roc_auc)}`;
+  if (typeof m.roc_auc_std === "number") s += ` ± ${n(m.roc_auc_std)}`;
+  if (typeof m.brier === "number") s += ` · Brier ${n(m.brier)}`;
+  if (m.f1 != null) s += ` · F1 ${n(m.f1)}`;
+  if (m.n_pos != null && m.n != null) s += ` (pos ${m.n_pos}/${m.n})`;
+  return s;
 }

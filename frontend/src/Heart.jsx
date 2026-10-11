@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html } from "@react-three/drei";
+import { OrbitControls, Html, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { riskColor, VESSELS } from "./data.js";
 
@@ -11,8 +11,7 @@ const PATHS = {
   RCA: [[0.1, 1.35, 0.85], [0.7, 0.95, 0.6], [1.15, 0.3, 0.0], [1.0, -0.4, -0.3], [0.5, -1.0, -0.2]],
 };
 
-// Label anchors sit on each vessel's own territory (front / left / right) so the
-// three tags never overlap.
+// Label anchors sit on each vessel's own territory (front / left / right).
 const LABEL_POS = {
   LAD: [-0.12, 0.5, 1.3],
   LCX: [-0.95, 0.62, 0.3],
@@ -21,13 +20,16 @@ const LABEL_POS = {
 
 function Vessel({ name, prob, selected, onSelect }) {
   const [hover, setHover] = useState(false);
+  const p = prob ?? 0;
   const geom = useMemo(() => {
     const curve = new THREE.CatmullRomCurve3(
-      PATHS[name].map((p) => new THREE.Vector3(...p))
+      PATHS[name].map((q) => new THREE.Vector3(...q))
     );
     return new THREE.TubeGeometry(curve, 80, selected || hover ? 0.12 : 0.09, 14, false);
   }, [name, selected, hover]);
-  const color = riskColor(prob ?? 0);
+  const color = riskColor(p);
+  // Subtle glow that grows with risk; brighter when selected/hovered.
+  const glow = 0.25 + p * 0.9 + (selected ? 0.5 : hover ? 0.3 : 0);
   const lp = LABEL_POS[name];
   return (
     <group>
@@ -38,20 +40,17 @@ function Vessel({ name, prob, selected, onSelect }) {
         onPointerOut={() => { setHover(false); document.body.style.cursor = "auto"; }}
       >
         <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={selected ? 0.9 : hover ? 0.6 : 0.3}
-          roughness={0.4}
-          metalness={0.1}
+          color={color} emissive={color} emissiveIntensity={glow}
+          roughness={0.3} metalness={0.15}
         />
       </mesh>
       <Html position={lp} center distanceFactor={9} zIndexRange={[20, 0]}>
         <div style={{
           fontSize: 11, fontWeight: 700, color: "#fff", padding: "1px 6px",
-          background: "rgba(0,0,0,.6)", borderRadius: 4,
+          background: "rgba(0,0,0,.62)", borderRadius: 4,
           border: selected ? "1px solid #4f9cff" : "1px solid rgba(255,255,255,.15)",
           whiteSpace: "nowrap", pointerEvents: "none",
-        }}>{name}</div>
+        }}>{name} {Math.round(p * 100)}%</div>
       </Html>
     </group>
   );
@@ -70,26 +69,53 @@ function HeartBody() {
     return new THREE.LatheGeometry(profile, 72);
   }, []);
 
-  const mat = (
-    <meshStandardMaterial color="#9a2b2b" emissive="#360c0c" emissiveIntensity={0.35}
-      roughness={0.52} metalness={0.0} transparent opacity={0.7} />
+  const lobe = (x) => (
+    <mesh position={[x, 1.18, -0.28]} scale={[0.62, 0.5, 0.6]} onClick={(e) => e.stopPropagation()}>
+      <sphereGeometry args={[1, 32, 24]} />
+      <meshStandardMaterial color="#86262a" emissive="#2c0a0a" emissiveIntensity={0.28}
+        roughness={0.34} metalness={0.12} transparent opacity={0.8} />
+    </mesh>
   );
 
   return (
     <group>
-      <mesh geometry={bodyGeom} onClick={(e) => e.stopPropagation()}>{mat}</mesh>
-      {/* atrial lobes, tucked toward the back-top so they never cover the vessels */}
-      <mesh position={[-0.52, 1.18, -0.28]} scale={[0.62, 0.5, 0.6]} onClick={(e) => e.stopPropagation()}>
-        <sphereGeometry args={[1, 32, 24]} />
-        <meshStandardMaterial color="#86262a" emissive="#2c0a0a" emissiveIntensity={0.3}
-          roughness={0.55} transparent opacity={0.8} />
+      <mesh geometry={bodyGeom} onClick={(e) => e.stopPropagation()}>
+        <meshStandardMaterial color="#9a2b2b" emissive="#360c0c" emissiveIntensity={0.3}
+          roughness={0.3} metalness={0.15} transparent opacity={0.7} />
       </mesh>
-      <mesh position={[0.52, 1.18, -0.28]} scale={[0.62, 0.5, 0.6]} onClick={(e) => e.stopPropagation()}>
-        <sphereGeometry args={[1, 32, 24]} />
-        <meshStandardMaterial color="#86262a" emissive="#2c0a0a" emissiveIntensity={0.3}
-          roughness={0.55} transparent opacity={0.8} />
-      </mesh>
+      {lobe(-0.52)}
+      {lobe(0.52)}
     </group>
+  );
+}
+
+function Scene({ probs, selected, onSelect }) {
+  const controls = useRef();
+  const idle = useRef();
+  const [auto, setAuto] = useState(true);
+  return (
+    <>
+      <hemisphereLight args={["#ffffff", "#3a1620", 0.5]} />
+      <ambientLight intensity={0.28} />
+      <directionalLight position={[4, 6, 6]} intensity={1.3} />
+      <directionalLight position={[-5, 0, -2]} intensity={0.4} />
+      <pointLight position={[0, 2.5, -5]} intensity={0.5} color="#ff6b6b" />
+      <pointLight position={[-3, 3, 4]} intensity={0.5} color="#fff2f2" />
+      <HeartBody />
+      {VESSELS.map((v) => (
+        <Vessel key={v} name={v} prob={probs[v]} selected={selected === v} onSelect={onSelect} />
+      ))}
+      <ContactShadows position={[0, -1.85, 0]} opacity={0.5} scale={7} blur={2.6}
+        far={4} frames={1} color="#000000" />
+      <OrbitControls
+        ref={controls} enablePan={false} target={[0, -0.05, 0]}
+        enableDamping dampingFactor={0.08}
+        minDistance={3.2} maxDistance={10}
+        autoRotate={auto} autoRotateSpeed={0.6}
+        onStart={() => { setAuto(false); clearTimeout(idle.current); }}
+        onEnd={() => { idle.current = setTimeout(() => setAuto(true), 3500); }}
+      />
+    </>
   );
 }
 
@@ -97,16 +123,7 @@ export default function Heart({ probs = {}, selected, onSelect }) {
   return (
     <Canvas camera={{ position: [2.3, 1.2, 6.4], fov: 42 }} dpr={[1, 2]}
       onPointerMissed={() => onSelect(null)}>
-      <hemisphereLight args={["#ffffff", "#3a1620", 0.55]} />
-      <ambientLight intensity={0.32} />
-      <directionalLight position={[4, 6, 6]} intensity={1.35} />
-      <directionalLight position={[-5, 0, -2]} intensity={0.4} />
-      <pointLight position={[0, 2.5, -5]} intensity={0.5} color="#ff6b6b" />
-      <HeartBody />
-      {VESSELS.map((v) => (
-        <Vessel key={v} name={v} prob={probs[v]} selected={selected === v} onSelect={onSelect} />
-      ))}
-      <OrbitControls enablePan={false} target={[0, -0.05, 0]} minDistance={3.2} maxDistance={10} />
+      <Scene probs={probs} selected={selected} onSelect={onSelect} />
     </Canvas>
   );
 }

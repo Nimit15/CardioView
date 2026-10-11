@@ -1,5 +1,5 @@
 import React from "react";
-import { VESSELS, VESSEL_LABEL, riskColor } from "./data.js";
+import { VESSELS, VESSEL_LABEL, riskColor, prettyFactors, fmtMetrics } from "./data.js";
 
 function pct(p) { return `${Math.round((p ?? 0) * 100)}%`; }
 
@@ -54,19 +54,24 @@ export default function Dashboard({ result, selected, onSelect }) {
 
       <h2>Why — top factors {selected ? `(${selected})` : "(select a vessel)"}</h2>
       <div className="card">
-        {sel ? (sel.top_factors || []).map((f, i) => (
-          <div className="factor" key={i}>
-            <span>{f.feature.replace(/^num__|^cat__/, "")}</span>
-            <span style={{ color: f.contribution >= 0 ? "var(--red)" : "var(--green)" }}>
-              {f.contribution >= 0 ? "▲" : "▼"} {Math.abs(f.contribution).toFixed(3)}
-            </span>
-          </div>
-        )) : <span className="sub">Click a vessel (list or 3D model) to see its SHAP drivers.</span>}
+        {sel ? (
+          <>
+            <div className="sub" style={{ margin: "0 0 6px" }}>
+              <span style={{ color: "var(--red)" }}>▲</span> raises risk ·{" "}
+              <span style={{ color: "var(--green)" }}>▼</span> lowers risk
+            </div>
+            {prettyFactors(sel.top_factors).map((f, i) => (
+              <div className="factor" key={i}>
+                <span>{f.label}</span>
+                <span style={{ color: f.contribution >= 0 ? "var(--red)" : "var(--green)" }}>
+                  {f.contribution >= 0 ? "▲" : "▼"} {Math.abs(f.contribution).toFixed(3)}
+                </span>
+              </div>
+            ))}
+          </>
+        ) : <span className="sub">Click a vessel (list or 3D model) to see its SHAP drivers.</span>}
         {sel?.cv_metrics?.roc_auc != null && (
-          <div className="sub" style={{ marginTop: 8 }}>
-            Model: {sel.cv_metrics.model} · CV ROC-AUC {sel.cv_metrics.roc_auc} ·
-            F1 {sel.cv_metrics.f1} (pos {sel.cv_metrics.n_pos}/{sel.cv_metrics.n})
-          </div>
+          <div className="sub" style={{ marginTop: 8 }}>{fmtMetrics(sel.cv_metrics)}</div>
         )}
       </div>
 
