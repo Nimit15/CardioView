@@ -1,62 +1,86 @@
-# CardioView — Explainable Cardiac Risk & 3D Vessel Visualization
+# CardioView
 
-**Multimodal AI Hackathon 2026 — Track A.** An educational decision-support
-prototype that predicts overall Coronary Artery Disease (CAD) status and
-per-vessel stenosis risk (LAD, LCX, RCA) from clinical/ECG/echo features, maps
-those predictions onto an interactive 3D heart, and explains every prediction
-with SHAP feature attributions.
+An interactive tool that estimates coronary artery disease risk from a patient's clinical data and shows it on a 3D heart, with a plain explanation of what drove each prediction.
 
-> ⚠️ **Clinical disclaimer.** Predictions are probability estimates for
-> decision support and education only. They are **not** a diagnosis, do **not**
-> localize an actual lesion, and are **not** a substitute for formal diagnostic
-> imaging or a physician.
+Built for the Multimodal AI Hackathon 2026 (Track A).
 
-## Architecture
+> This is an educational prototype. The numbers are probability estimates meant for learning and decision support, not a diagnosis. A highlighted artery shows predicted risk, not a confirmed blockage.
+
+## What it does
+
+You enter a patient's details, things like age, blood pressure, cholesterol, and ECG findings. CardioView then estimates whether coronary artery disease is likely overall, and the stenosis risk for each of the three main arteries: the LAD, LCX, and RCA.
+
+Each artery lights up on a 3D heart, from green for low risk to red for high. You can rotate and zoom the heart, and click any artery to see which of the patient's measurements pushed its score up or down.
+
+## Screenshots
+
+Add two or three images here once you have them: the 3D heart with the arteries coloured, a single artery selected with its contributing factors, and the full dashboard.
+
+## Getting started
+
+You will need two free programs first: Python (version 3.10 or newer) and Node.js (version 18 or newer). If you do not have them, get Python from python.org/downloads and Node.js from nodejs.org.
+
+The project runs in two parts at the same time: a Python backend that holds the model, and a web app that shows the 3D heart.
+
+### Step 1: train the model (about a minute, done once)
+
+In the project folder, run:
+
 ```
-data/        Z-Alizadeh Sani Extension dataset (user-provided, see below)
-ml/train.py  leakage-safe training -> models/*.joblib + metrics.json + SHAP
-backend/     FastAPI service: /predict returns per-vessel prob + SHAP
-frontend/    Vite + React + React Three Fiber 3D heart + dashboard
-docs/        6-page technical report + demo video script
-```
-
-## Prerequisites
-- Python 3.10+ and Node.js 18+
-- The dataset file (not redistributed here — see Dataset).
-
-## Dataset
-Z-Alizadeh Sani **Extension** dataset (adds LAD/LCX/RCA vessel labels).
-Download from the UCI ML Repository or Kaggle and place the file at
-`data/Z-Alizadeh_Sani_Extention.xlsx` (CSV also accepted). The loader
-auto-detects column names. Per the Track A rules, the columns
-**Cath, LAD, LCX, RCA are excluded from model inputs** to prevent target leakage.
-
-## 1. Train models
-```bash
 pip install -r requirements.txt
-python ml/train.py --data data/Z-Alizadeh_Sani_Extention.xlsx --out models/
-```
-Prints 5-fold cross-validated metrics (accuracy, precision, recall, F1, ROC-AUC)
-for each target and writes `models/metrics.json`, model files, and SHAP importances.
-
-## 2. Run the backend
-```bash
-uvicorn backend.app:app --reload --port 8000
+python ml/train.py --data "data/extention of Z-Alizadeh sani dataset.xlsx" --out models/
 ```
 
-## 3. Run the frontend
-```bash
-cd frontend && npm install && npm run dev
+This prints the accuracy figures and saves the trained models into the `models` folder.
+
+### Step 2: start the backend
+
 ```
-Open the printed localhost URL. Use **Mock mode** to demo the 3D heart without
-the backend; switch to **Live mode** to score real patient inputs.
+uvicorn backend.app:app --port 8000
+```
 
-## Evaluation note
-All reported numbers are **cross-validation** results on 303 records, not
-held-out test performance. The small sample makes per-vessel estimates
-variable; we report class balance alongside every metric and treat methodology
-(no leakage, in-fold preprocessing) as the headline, not a single accuracy number.
+Leave this window open. To check it is running, open http://localhost:8000/health in your browser.
 
-## Attribution
-Z-Alizadeh Sani Extension dataset, UCI Machine Learning Repository.
-3D heart mesh: <fill in source + license>. SHAP (Lundberg & Lee, 2017).
+### Step 3: start the web app
+
+Open a second terminal and run:
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+Open the link it prints, usually http://localhost:5173.
+
+A quick tip: the app has a Mock mode that works on its own if you just want to look at the interface, and a Live mode that calls the real model from Step 2.
+## Results
+
+Measured with repeated five-fold cross-validation, so these are averaged, honest numbers rather than a single lucky split:
+
+| What we predict | ROC-AUC |
+|---|---|
+| Overall coronary artery disease | about 0.92 |
+| LAD artery | about 0.85 |
+| LCX artery | about 0.72 |
+| RCA artery | about 0.71 |
+
+The LCX and RCA scores are lower because far fewer patients in the data have disease in those two arteries, so there is less for the model to learn from. We show that openly instead of hiding it. We also keep the diagnostic result columns (Cath, LAD, LCX, RCA) out of the model's inputs, so it cannot simply read the answer off the data.
+
+## How the project is organised
+
+```
+ml/train.py     trains the models and saves the results
+backend/app.py  serves predictions and explanations (FastAPI)
+frontend/       the 3D heart and dashboard (React + React Three Fiber)
+data/           the patient dataset
+docs/           the full technical report and the demo video script
+```
+
+## The data
+
+Z-Alizadeh Sani Extension dataset, 303 patients, from the UCI Machine Learning Repository.
+
+## A note on safety
+
+CardioView is a learning and decision-support demo. It does not diagnose anyone and is not a replacement for proper medical imaging or a doctor's judgement. The disclaimer stays on screen while you use it.
