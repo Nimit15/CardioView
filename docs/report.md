@@ -56,13 +56,12 @@ because the UI colors vessels by probability), alongside the positive-class coun
 | LCX | Random Forest | 0.720 ± 0.062 | 0.586 | 0.598 | 0.581 | 0.682 | 0.210 | 119/303 |
 | RCA | Random Forest | 0.712 ± 0.050 | 0.524 | 0.565 | 0.502 | 0.666 | 0.210 | 114/303 |
 
-**Reading the results honestly.** Overall CAD and LAD are strong and consistent
-with the literature. LCX and RCA are meaningfully weaker — these vessels have the
-fewest positive cases (119 and 114 of 303), so their estimates are more variable
-and the features carry less signal for them. We present this gap deliberately: a
-leakage-free pipeline that is honest about where it is uncertain is more
-trustworthy than one quoting a uniform 90%+. These are cross-validation results,
-not held-out test performance.
+**Reading the results honestly.** Overall CAD and LAD perform better than LCX
+and RCA on this dataset. The latter targets have fewer positive cases (119 and
+114 of 303), and their cross-validation scores are lower. These results come from
+repeated cross-validation, not an independent test set or clinical validation. The
+same CV procedure is used to compare the candidate models and report the selected
+model's results, so the figures should be read as model-development estimates.
 
 ## 5. Explainability
 The backend returns per-input SHAP contributions for every prediction. For
@@ -94,6 +93,9 @@ high ejection fraction pulling it down), turning a probability into a reason.
   coordinates (e.g., Region with RWMA is not a pixel-level lesion map).
 - 303 patients is a small sample; per-vessel metrics (especially LCX/RCA) are
   variable and should not be read as validated clinical performance.
+- Cross-validation is used both to compare candidate models and report the selected
+  model's metrics. The results are model-development estimates, not a separate
+  unbiased final test of model selection.
 - The disclaimer is visible throughout the UI.
 
 ## 8. Reproducibility

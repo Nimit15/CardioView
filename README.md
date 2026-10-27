@@ -1,90 +1,163 @@
-# CardioView
+<div align="center">
+  <img src="docs/images/cardioview-banner.svg" alt="CardioView — explainable cardiac risk visualization" width="100%" />
+  <p><strong>Interactive 3D cardiac risk visualization, with explanations you can inspect.</strong></p>
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=111827" alt="React 18" />
+    <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Explainability-SHAP-805AD5" alt="SHAP explainability" />
+  </p>
+</div>
 
-An interactive tool that estimates coronary artery disease risk from a patient's clinical data and shows it on a 3D heart, with a plain explanation of what drove each prediction.
+CardioView estimates overall coronary artery disease (CAD) status and stenosis probabilities for the LAD, LCX, and RCA. It maps those outputs onto a rotatable 3D heart and shows which patient features contributed most to each prediction.
 
-Built for the Multimodal AI Hackathon 2026 (Track A).
+> **Important:** CardioView is an educational prototype, not a medical device. Its probabilities are exploratory model outputs, not a diagnosis or a confirmed map of arterial lesions. Do not use them to make medical decisions.
 
-> This is an educational prototype. The numbers are probability estimates meant for learning and decision support, not a diagnosis. A highlighted artery shows predicted risk, not a confirmed blockage.
+## At a glance
 
-## What it does
-
-You enter a patient's details, things like age, blood pressure, cholesterol, and ECG findings. CardioView then estimates whether coronary artery disease is likely overall, and the stenosis risk for each of the three main arteries: the LAD, LCX, and RCA.
-
-Each artery lights up on a 3D heart, from green for low risk to red for high. You can rotate and zoom the heart, and click any artery to see which of the patient's measurements pushed its score up or down.
+- **Four predictions:** overall CAD, LAD, LCX, and RCA.
+- **Interactive 3D view:** rotate and zoom the heart, select a vessel, and see its estimated probability.
+- **Feature explanations:** inspect the strongest SHAP contributions for a selected prediction.
+- **Two modes:** Mock mode lets you explore the interface without a backend; Live mode calls the trained models through FastAPI.
+- **Transparent evaluation:** cross-validation metrics, their variability, and the positive-class counts are reported below.
 
 ## Screenshots
 
-![Dashboard with the 3D heart and coloured coronary arteries, high-risk patient](docs/screenshots/01-dashboard-high-risk.jpg)
+<table>
+  <tr>
+    <td width="34%" valign="top">
+      <img src="docs/screenshots/high-risk-dashboard.jpg" alt="CardioView high-risk sample dashboard" width="100%" />
+      <strong>High-risk example</strong><br />
+      <sub>Vessel probabilities and the selected vessel's strongest factors.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/screenshots/low-risk-dashboard.jpg" alt="CardioView low-risk sample dashboard" width="100%" />
+      <strong>Low-risk example</strong><br />
+      <sub>A different sample profile produces a different set of outputs.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/screenshots/responsive-layout.jpg" alt="CardioView dashboard in a narrow stacked layout" width="100%" />
+      <strong>Responsive layout</strong><br />
+      <sub>The controls, heart, and explanation panel stack on narrower screens.</sub>
+    </td>
+  </tr>
+</table>
 
-![An artery selected, showing the factors behind its score](docs/screenshots/02-artery-selected-factors.jpg)
+## Model results
 
-![A low-risk patient — the arteries turn green](docs/screenshots/03-low-risk.jpg)
+The figures below come from repeated stratified 5-fold cross-validation, with 5 repeats (25 validation fits per target). ROC-AUC is shown as the mean ± standard deviation across folds. F1 is the mean cross-validation F1 score; a lower Brier score indicates better probability calibration.
+
+| Target | ROC-AUC (mean ± SD) | F1 | Brier score | Positive cases |
+|---|---:|---:|---:|---:|
+| Overall CAD | 0.923 ± 0.038 | 0.910 | 0.113 | 216 / 303 |
+| LAD | 0.852 ± 0.047 | 0.829 | 0.165 | 177 / 303 |
+| LCX | 0.720 ± 0.062 | 0.586 | 0.210 | 119 / 303 |
+| RCA | 0.712 ± 0.050 | 0.524 | 0.210 | 114 / 303 |
+
+These are **model-development cross-validation results, not independent test results or clinical validation**. The same CV procedure is used to compare candidate models, so the figures should be interpreted as development estimates. LCX and RCA are weaker than CAD and LAD on this dataset; the small sample and class counts limit how much can be inferred from them.
+
+## How it works
+
+1. **Enter a sample or patient feature profile.** The interface accepts the demographic, clinical, ECG, laboratory, and echocardiographic fields present in the dataset.
+2. **Run the prediction pipeline.** Four scikit-learn classifiers estimate the overall CAD and vessel-specific outputs.
+3. **Inspect the 3D view.** LAD, LCX, and RCA are separate tube geometries and update their colours based on estimated probability. Each vessel also displays a numeric percentage, so the result does not depend on colour alone.
+4. **Read the explanation.** Select a vessel to review its strongest feature contributions and the model's cross-validation metrics.
+
+The highlighted arteries are a visualization of model output. The dataset does not contain 3D coordinates for a patient's lesion, so the app does not claim to locate an actual blockage.
 
 ## Getting started
 
-You will need two free programs first: Python (version 3.10 or newer) and Node.js (version 18 or newer). If you do not have them, get Python from python.org/downloads and Node.js from nodejs.org.
+### Requirements
 
-The project runs in two parts at the same time: a Python backend that holds the model, and a web app that shows the 3D heart.
+- Python 3.10 or newer
+- Node.js 18 or newer, with npm
+- The dataset file included at `data/extention of Z-Alizadeh sani dataset.xlsx`
 
-### Step 1: train the model (about a minute, done once)
+### 1. Install Python dependencies and train the models
 
-In the project folder, run:
+Run these commands from the repository root.
 
-```
-pip install -r requirements.txt
-python ml/train.py --data "data/extention of Z-Alizadeh sani dataset.xlsx" --out models/
-```
+**Windows PowerShell**
 
-This prints the accuracy figures and saves the trained models into the `models` folder.
+    py -3.12 -m venv .venv
+    ./.venv/Scripts/python.exe -m pip install -r requirements.txt
+    ./.venv/Scripts/python.exe ml/train.py --data "data/extention of Z-Alizadeh sani dataset.xlsx" --out models/
 
-### Step 2: start the backend
+**macOS / Linux**
 
-```
-uvicorn backend.app:app --port 8000
-```
+    python3 -m venv .venv
+    ./.venv/bin/python -m pip install -r requirements.txt
+    ./.venv/bin/python ml/train.py --data "data/extention of Z-Alizadeh sani dataset.xlsx" --out models/
 
-Leave this window open. To check it is running, open http://localhost:8000/health in your browser.
+Training creates the model weights and refreshes the metrics, feature schema, and SHAP summary files under `models/`. The generated model weights are not tracked in Git, so run training before starting Live mode on a fresh clone.
 
-### Step 3: start the web app
+### 2. Start the backend
 
-Open a second terminal and run:
+Keep the terminal at the repository root.
 
-```
-cd frontend
-npm install
-npm run dev
-```
+**Windows PowerShell**
 
-Open the link it prints, usually http://localhost:5173.
+    ./.venv/Scripts/python.exe -m uvicorn backend.app:app --port 8000
 
-A quick tip: the app has a Mock mode that works on its own if you just want to look at the interface, and a Live mode that calls the real model from Step 2.
-## Results
+**macOS / Linux**
 
-Measured with repeated five-fold cross-validation, so these are averaged, honest numbers rather than a single lucky split:
+    ./.venv/bin/python -m uvicorn backend.app:app --port 8000
 
-| What we predict | ROC-AUC |
-|---|---|
-| Overall coronary artery disease | about 0.92 |
-| LAD artery | about 0.85 |
-| LCX artery | about 0.72 |
-| RCA artery | about 0.71 |
+The health endpoint is available at [http://localhost:8000/health](http://localhost:8000/health). It should report that the four models are loaded.
 
-The LCX and RCA scores are lower because far fewer patients in the data have disease in those two arteries, so there is less for the model to learn from. We show that openly instead of hiding it. We also keep the diagnostic result columns (Cath, LAD, LCX, RCA) out of the model's inputs, so it cannot simply read the answer off the data.
+### 3. Start the frontend
 
-## How the project is organised
+Open a second terminal:
 
-```
-ml/train.py     trains the models and saves the results
-backend/app.py  serves predictions and explanations (FastAPI)
-frontend/       the 3D heart and dashboard (React + React Three Fiber)
-data/           the patient dataset
-docs/           the full technical report and the demo video script
-```
+    cd frontend
+    npm install
+    npm run dev
 
-## The data
+Open the local URL printed by Vite, usually [http://localhost:5173](http://localhost:5173). Choose **Live mode** to call the backend. **Mock mode** can be used without training or starting the backend; it uses illustrative heuristic values and should not be confused with model predictions.
 
-Z-Alizadeh Sani Extension dataset, 303 patients, from the UCI Machine Learning Repository.
+## Project layout
 
-## A note on safety
+    backend/
+      app.py                FastAPI prediction and health endpoints
+    data/
+      extention of Z-Alizadeh sani dataset.xlsx
+    docs/
+      report.md             Methodology, results, and limitations
+      demo_script.md        Suggested walkthrough for a short demo
+      images/               README banner artwork
+      screenshots/          Application screenshots
+    frontend/
+      src/                  React dashboard and 3D heart
+      public/               Browser icon
+    ml/
+      train.py              Leakage-aware training and evaluation
+    models/
+      metrics.json          Cross-validation metrics
+      feature_schema.json   Model input schema
+      shap_*.json            Feature importance summaries
+    requirements.txt
 
-CardioView is a learning and decision-support demo. It does not diagnose anyone and is not a replacement for proper medical imaging or a doctor's judgement. The disclaimer stays on screen while you use it.
+## Data and methodology
+
+CardioView uses the [Z-Alizadeh Sani Extension dataset from the UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/411/extention%2Bof%2Bz%2Balizadeh%2Bsani%2Bdataset), which contains 303 patient records.
+
+To avoid target leakage, the columns `Cath`, `LAD`, `LCX`, and `RCA` are excluded from the input features for every prediction task. Imputation, scaling, and categorical encoding are fit inside each cross-validation fold. The final inference models are then fitted on the available dataset.
+
+More detail is in the [technical report](docs/report.md), including the preprocessing, evaluation procedure, model choices, and limitations.
+
+## Limitations and safety
+
+- The dataset has only 303 records and comes from a single source.
+- Cross-validation does not establish generalization to new hospitals, patient populations, or clinical settings.
+- Performance is lower for LCX and RCA than for overall CAD and LAD.
+- Individual probabilities are outputs of models fitted on this dataset, not validated clinical risk estimates.
+- A highlighted vessel indicates the model's estimated stenosis probability; it does not identify a patient's confirmed lesion location.
+
+CardioView is intended for learning, demonstration, and discussion of explainable ML. It is not a substitute for a qualified clinician or diagnostic imaging.
+
+## Documentation
+
+- [Technical report](docs/report.md)
+- [Demo walkthrough script](docs/demo_script.md)
+- [Training pipeline](ml/train.py)
+- [FastAPI backend](backend/app.py)
